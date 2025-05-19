@@ -36,6 +36,7 @@ from typing import Union, Tuple
 import pandas as pd
 import numpy as np
 import mlflow
+from mlflow.entities.model_registry import ModelVersion
 from mlflow.tracking import MlflowClient  # type: ignore
 from mlflow.entities import Run, model_registry  # type: ignore
 from mlflow.entities.experiment import Experiment  # type: ignore
@@ -352,10 +353,11 @@ class MlFlowModelManager:
             production version, or None if no production version exists.
         """
         try:
-            versions = self.client_mlflow.get_latest_versions(
-                registered_model_name, stages=["Production"]
+            registered_model = self.client_mlflow.get_registered_model(
+                registered_model_name
             )
-            return versions[0] if versions else None
+            latest_versions = registered_model.latest_versions
+            return latest_versions[-1] if latest_versions else None
         except MlflowException:
             return None
 
@@ -525,3 +527,15 @@ class MlFlowModelManager:
             self.client_mlflow.transition_model_version_stage(
                 name=hpo_champion_model, version=new_version, stage="Production"
             )
+
+    def load_model_from_version(self, version: ModelVersion) -> mlflow.pyfunc.PythonModel:
+        """
+        Load a model from a specific version in the MLflow model registry.
+
+        Args:
+            version (ModelVersion): The version of the model to load.
+
+        Returns:
+            mlflow.pyfunc.PythonModel: The loaded model.
+        """
+        return mlflow.pyfunc.load_model(version.source)
