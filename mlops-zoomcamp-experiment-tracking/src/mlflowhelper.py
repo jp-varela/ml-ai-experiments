@@ -527,3 +527,15 @@ class MlFlowModelManager:
             self.client_mlflow.transition_model_version_stage(
                 name=hpo_champion_model, version=new_version, stage="Production"
             )
+
+    def load_model_from_version(self, version: ModelVersion) -> mlflow.pyfunc.PythonModel:
+        """
+        Load a model from a specific version in the MLflow model registry.
+
+        Args:
+            version (ModelVersion): The version of the model to load.
+
+        Returns:
+            mlflow.pyfunc.PythonModel: The loaded model.
+        """
+        return mlflow.pyfunc.load_model(version.source)
