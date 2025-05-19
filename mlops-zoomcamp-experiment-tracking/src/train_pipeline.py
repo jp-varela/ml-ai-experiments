@@ -26,6 +26,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Dict
+from tempfile import TemporaryDirectory
 
 
 import yaml
@@ -160,6 +161,13 @@ def run_optimization(
             mlflow.log_metric("precision_val", precision_val)
             mlflow.log_metric("recall_val", recall_val)
             mlflow.log_metric("f1_val", f1_val)
+            
+            # Save data temp csv 
+            with TemporaryDirectory() as temp_dir:
+                temp_file_path = os.path.join(temp_dir, "temp.csv")
+                dataset_split_opt.x_train.to_csv(temp_file_path, index=False)
+                # Log the temporary CSV file
+                mlflow.log_artifact(temp_file_path, artifact_path="data")
 
             # Log the model
             mlflow.sklearn.log_model(sk_model=pipeline_opt, artifact_path="model")
